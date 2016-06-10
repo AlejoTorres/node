@@ -1,16 +1,23 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var User = require("./models/user").User;
-var session = require("express-session");
+//var session = require("express-session");
+var cookieSession = require("cookie-session");
+var router_app = require("./route_app");
+var session_middleware = require("./middlewares/session");
 var app = express();
 
-app.use("public", express.static("public"));
+app.use("/public", express.static("public"));
 app.use(bodyParser.json()); // para peticiones application/json 
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(session({
+/*app.use(session({
 	secret: "123asdqwe456ñlkpoi",
 	resave: false,
 	saveUninitialized: false
+}));*/
+app.use(cookieSession({
+	name: "session",
+	keys: ["key-1", "key-2"]
 }));
 
 app.set("view engine", "jade");
@@ -67,9 +74,11 @@ app.post("/sessions", function(req, res){
 	}, 
 	"username email", 
 	function(err, user){
+		//console.log(user);
 		req.session.user_id = user._id;
 		//console.log(docs);
-		res.send("=>");
+		//res.send("=>");
+		res.redirect("/app")
 	});
 
 	/*User.find({
@@ -82,5 +91,8 @@ app.post("/sessions", function(req, res){
 		res.send("=>");
 	});*/
 });
+
+app.use("/app", session_middleware);
+app.use("/app", router_app);
 
 app.listen(8000);
